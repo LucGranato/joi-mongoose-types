@@ -1,0 +1,30 @@
+{
+  "name": "joi-mongoose-types",
+  "version": "1.0.0",
+  "description": "Best way to validate payloads containing mongoose types",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LucGranato/joi-mongoose-types.git"
+  },
+  "keywords": [
+    "joi",
+    "mongoose",
+    "objectid",
+    "extension"
+  ],
+  "author": "Luca Chamecki Granato <luca.chamecki@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/LucGranato/joi-mongoose-types/issues"
+  },
+  "homepage": "https://github.com/LucGranato/joi-mongoose-types#readme",
+  "devDependencies": {
+    "joi": "^13.6.0",
+    "mocha": "^5.2.0",
+    "mongoose": "^5.2.9"
+  }
+}

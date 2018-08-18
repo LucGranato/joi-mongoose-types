@@ -1,1 +1,1 @@
-# joi-mongoose
+# joi-mongoose-types
