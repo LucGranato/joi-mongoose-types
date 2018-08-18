@@ -13,9 +13,9 @@ npm i joi-mongoose-types
 ~~~javascript
 const Joi = require('joi'),
 	mongoose = require('mongoose'),
-	JoiMongooseTypes = require('joi-mongoose-types);
+	JoiMongooseTypes = require('joi-mongoose-types');
 
-var JoiExtended = Joi.extends(JoiMongooseTypes(mongoose));
+var JoiExtended = Joi.extend(JoiMongooseTypes(mongoose));
 ~~~
 
 ## License
