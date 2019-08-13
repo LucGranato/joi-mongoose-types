@@ -1,6 +1,6 @@
 {
   "name": "joi-mongoose-types",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Best way to validate payloads containing mongoose types",
   "main": "joi-mongoose-types.js",
   "scripts": {
