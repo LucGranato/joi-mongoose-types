@@ -2,7 +2,7 @@
 
 Joi extension for validate mongoose types like `ObjectId` and `Model`.
 
-### Installing
+## Installing
 
 ~~~bash
 npm i joi-mongoose-types
@@ -11,11 +11,11 @@ npm i joi-mongoose-types
 ## Use
 
 ~~~javascript
-const Joi = require('joi'),
-	mongoose = require('mongoose'),
-	JoiMongooseTypes = require('joi-mongoose-types');
+const Joi = require('joi');
+const mongoose = require('mongoose');
+const JoiMongooseTypes = require('joi-mongoose-types');
 
-var JoiExtended = Joi.extend(JoiMongooseTypes(mongoose));
+const JoiExtended = Joi.extend(JoiMongooseTypes(Joi, mongoose));
 ~~~
 
 ## License

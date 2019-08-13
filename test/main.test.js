@@ -1,190 +1,410 @@
-const assert = require('assert'),
-	mongoose = require('mongoose'),
-	Joi = require('joi'),
-	JoiMongooseExtension = require('../index');
+'use strict';
 
-describe('Joi extension (joi-mongoose) test', function(){
+const Joi = require('@hapi/joi');
+const assert = require('assert');
+const mongoose = require('mongoose');
+const JoiMongooseExtension = require('../joi-mongoose-types');
 
-	before(function () {
-		this.personSchema = new mongoose.Schema({
-			name: {
-				type: String,
-				required: true
-			},
-			father: {
-				type: mongoose.SchemaTypes.ObjectId,
-				ref: 'person',
-				required: false
-			}
-		});
-		this.personModel = mongoose.model('person', this.personSchema);
+const carSchema = new mongoose.Schema({
+  model: String,
+});
+const Car = mongoose.model('car', carSchema);
+const van = new Car({
+  model: 'van',
+});
 
-		this.father = new this.personModel({
-			name: 'Darth Vader'
-		});
+const personSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+  father: {
+    type: mongoose.SchemaTypes.ObjectId,
+    ref: 'person',
+    required: false,
+  },
+});
+const Person = mongoose.model('person', personSchema);
 
-		this.soon = new this.personModel({
-			name: 'Luke',
-			father: this.father
-		});
-	});
+const father = new Person({
+  name: 'Darth Vader',
+});
 
-	it('Apply Joi extension', function () {
-		this.joi = Joi.extend(JoiMongooseExtension(mongoose, {
-			mongooseObjectIdJoiName: 'oid',
-			mongooseDocumentJoiName: 'doc'
-		}));
-		assert.ok(typeof this.joi.oid == 'function', 'Didnt added new mongoose ObjectId validation');
-		assert.ok(typeof this.joi.doc == 'function', 'Didnt added new mongoose document validation');
-	});
+const soon = new Person({
+  name: 'Luke',
+  father,
+});
 
-	// ========================================= VALIDATION =========================================
-	it('Mongoose ObjectId validation from _id', function () {
-		assert.ok(this.father._id instanceof mongoose.mongo.ObjectID);
-		this.joi.assert(
-			this.father._id,
-			this.joi.oid().required()
-		);
-	});
-	it('Mongoose ObjectId validation from id', function () {
-		assert.ok(typeof this.father.id === 'string');
-		this.joi.assert(
-			this.father.id,
-			this.joi.oid().required()
-		);
-	});
-	it('Mongoose ObjectId validation from document', function () {
-		assert.ok(this.father instanceof mongoose.Model);
-		this.joi.validate(
-			this.father,
-			this.joi.oid().required()
-		);
-	});
-	it('Mongoose ObjectId optional validation', function () {
-		this.joi.assert(
-			undefined,
-			this.joi.oid().optional()
-		);
-		assert.ok(this.father._id instanceof mongoose.mongo.ObjectID);
-		this.joi.assert(
-			this.father._id,
-			this.joi.oid().optional()
-		);
-	});
-	// ========================================= VALIDATION =========================================
+const joi = Joi.extend(
+  JoiMongooseExtension(Joi, mongoose, {
+    mongooseObjectIdJoiName: 'oid',
+    mongooseDocumentJoiName: 'doc',
+  }),
+);
 
-	// ========================================= COMPARE _ID ========================================
-	it('Mongoose ObjectId compare _id with same _id', function () {
-		assert.ok(this.father._id instanceof mongoose.mongo.ObjectID);
-		this.joi.assert(
-			this.father._id,
-			this.joi.oid().required().same(this.father._id)
-		);
-		this.joi.assert(
-			this.father._id,
-			this.joi.oid().required().same([this.father._id])
-		);
-	});
-	it('Mongoose ObjectId compare _id with same id', function () {
-		assert.ok(this.father._id instanceof mongoose.mongo.ObjectID);
-		assert.ok(typeof this.father.id === 'string');
-		this.joi.assert(
-			this.father._id,
-			this.joi.oid().required().same(this.father.id)
-		);
-		this.joi.assert(
-			this.father._id,
-			this.joi.oid().required().same([this.father.id])
-		);
-	});
-	it('Mongoose ObjectId compare _id with same document', function () {
-		assert.ok(this.father instanceof mongoose.Model);
-		assert.ok(this.father._id instanceof mongoose.mongo.ObjectID);
-		this.joi.assert(
-			this.father._id,
-			this.joi.oid().required().same(this.father)
-		);
-		this.joi.assert(
-			this.father._id,
-			this.joi.oid().required().same([this.father])
-		);
-	});
-	// ========================================= COMPARE _ID ========================================
+function assertPersonDocument(someone) {
+  assert.ok(someone instanceof mongoose.Model);
+  assert.ok(someone instanceof Person);
+  return someone;
+}
 
-	// ========================================= COMPARE ID =========================================
-	it('Mongoose ObjectId compare id with same _id', function () {
-		assert.ok(this.father._id instanceof mongoose.mongo.ObjectID);
-		assert.ok(typeof this.father.id === 'string');
-		this.joi.assert(
-			this.father.id,
-			this.joi.oid().required().same(this.father._id)
-		);
-		this.joi.assert(
-			this.father.id,
-			this.joi.oid().required().same([this.father._id])
-		);
-	});
-	it('Mongoose ObjectId compare id with same id', function () {
-		assert.ok(typeof this.father.id === 'string');
-		this.joi.assert(
-			this.father.id,
-			this.joi.oid().required().same(this.father.id)
-		);
-		this.joi.assert(
-			this.father.id,
-			this.joi.oid().required().same([this.father.id])
-		);
-	});
-	it('Mongoose ObjectId compare id with same document', function () {
-		assert.ok(this.father instanceof mongoose.Model);
-		assert.ok(typeof this.father.id === 'string');
-		this.joi.assert(
-			this.father.id,
-			this.joi.oid().required().same(this.father)
-		);
-		this.joi.assert(
-			this.father.id,
-			this.joi.oid().required().same([this.father])
-		);
-	});
-	// ========================================= COMPARE ID =========================================
+describe('Joi extension (joi-mongoose) test', () => {
+  it('Apply Joi extension', () => {
+    assert.ok(
+      typeof joi.oid == 'function',
+      'Didnt added new mongoose ObjectId validation',
+    );
+    assert.ok(
+      typeof joi.doc == 'function',
+      'Didnt added new mongoose document validation',
+    );
+  });
 
-	// ========================================= COMPARE MODEL ======================================
-	it('Mongoose ObjectId compare document with same _id', function () {
-		assert.ok(this.father instanceof mongoose.Model);
-		assert.ok(this.father._id instanceof mongoose.mongo.ObjectID);
-		this.joi.assert(
-			this.father,
-			this.joi.oid().required().same(this.father._id)
-		);
-		this.joi.assert(
-			this.father,
-			this.joi.oid().required().same([this.father._id])
-		);
-	});
-	it('Mongoose ObjectId compare document with same id', function () {
-		assert.ok(this.father instanceof mongoose.Model);
-		assert.ok(typeof this.father.id === 'string');
-		this.joi.assert(
-			this.father,
-			this.joi.oid().required().same(this.father.id)
-		);
-		this.joi.assert(
-			this.father,
-			this.joi.oid().required().same([this.father.id])
-		);
-	});
-	it('Mongoose ObjectId compare document with same document', function () {
-		assert.ok(this.father instanceof mongoose.Model);
-		this.joi.assert(
-			this.father,
-			this.joi.oid().required().same(this.father)
-		);
-		this.joi.assert(
-			this.father,
-			this.joi.oid().required().same([this.father])
-		);
-	});
-	// ========================================= COMPARE MODEL ======================================
+  describe('ObjectId', () => {
+    describe('Type validation', () => {
+      it('From _id', () => {
+        assertPersonDocument(father);
+        assert.ok(father._id instanceof mongoose.mongo.ObjectID);
+        const id = joi.attempt(father._id, joi.oid().required());
+        assert.equal(typeof id, 'string');
+        assert.equal(id, father._id.toString());
+      });
+      it('From id', () => {
+        assertPersonDocument(father);
+        assert.equal(typeof father.id, 'string');
+        const id = joi.attempt(father.id, joi.oid().required());
+        assert.equal(typeof id, 'string');
+        assert.equal(id, father.id);
+      });
+      it('From document', () => {
+        assertPersonDocument(father);
+        const id = joi.attempt(father, joi.oid().required());
+        assert.equal(typeof id, 'string');
+        assert.equal(id, father.id);
+      });
+      it('Optional', () => {
+        const nothing = joi.assert(undefined, joi.oid().optional());
+        assert.equal(nothing, undefined);
+      });
+    });
 
+    describe('Same _id', () => {
+      it('With equal _id', () => {
+        assert.ok(father._id instanceof mongoose.mongo.ObjectID);
+        joi.assert(
+          father._id,
+          joi
+            .oid()
+            .required()
+            .same(father._id),
+        );
+        joi.assert(
+          father._id,
+          joi
+            .oid()
+            .required()
+            .same([father._id, soon._id]),
+        );
+        assert.throws(() => {
+          joi.assert(
+            father._id,
+            joi
+              .oid()
+              .required()
+              .same(soon._id),
+          );
+        });
+      });
+      it('With equal id', () => {
+        assert.ok(father._id instanceof mongoose.mongo.ObjectID);
+        assert.ok(typeof father.id === 'string');
+        joi.assert(
+          father._id,
+          joi
+            .oid()
+            .required()
+            .same(father.id),
+        );
+        joi.assert(
+          father._id,
+          joi
+            .oid()
+            .required()
+            .same([father.id, soon.id]),
+        );
+        assert.throws(() => {
+          joi.assert(
+            father._id,
+            joi
+              .oid()
+              .required()
+              .same(soon.id),
+          );
+        });
+      });
+      it('With equal document', () => {
+        assert.ok(father instanceof mongoose.Model);
+        assert.ok(father._id instanceof mongoose.mongo.ObjectID);
+        joi.assert(
+          father._id,
+          joi
+            .oid()
+            .required()
+            .same(father),
+        );
+        joi.assert(
+          father._id,
+          joi
+            .oid()
+            .required()
+            .same([father, soon]),
+        );
+        assert.throws(() => {
+          joi.assert(
+            father._id,
+            joi
+              .oid()
+              .required()
+              .same(soon),
+          );
+        });
+      });
+    });
+
+    describe('Same id', () => {
+      it('With equal _id', () => {
+        assert.ok(father._id instanceof mongoose.mongo.ObjectID);
+        assert.ok(typeof father.id === 'string');
+        joi.assert(
+          father.id,
+          joi
+            .oid()
+            .required()
+            .same(father._id),
+        );
+        joi.assert(
+          father.id,
+          joi
+            .oid()
+            .required()
+            .same([father._id, soon._id]),
+        );
+        assert.throws(() => {
+          joi.assert(
+            father.id,
+            joi
+              .oid()
+              .required()
+              .same(soon._id),
+          );
+        });
+      });
+      it('With equal id', () => {
+        assert.ok(typeof father.id === 'string');
+        joi.assert(
+          father.id,
+          joi
+            .oid()
+            .required()
+            .same(father.id),
+        );
+        joi.assert(
+          father.id,
+          joi
+            .oid()
+            .required()
+            .same([father.id, soon.id]),
+        );
+        assert.throws(() => {
+          joi.assert(
+            father.id,
+            joi
+              .oid()
+              .required()
+              .same(soon.id),
+          );
+        });
+      });
+      it('With equal document', () => {
+        assert.ok(father instanceof mongoose.Model);
+        assert.ok(typeof father.id === 'string');
+        joi.assert(
+          father.id,
+          joi
+            .oid()
+            .required()
+            .same(father),
+        );
+        joi.assert(
+          father.id,
+          joi
+            .oid()
+            .required()
+            .same([father, soon]),
+        );
+        assert.throws(() => {
+          joi.assert(
+            father.id,
+            joi
+              .oid()
+              .required()
+              .same(soon),
+          );
+        });
+      });
+    });
+
+    describe('Same document', () => {
+      it('With equal _id', () => {
+        assert.ok(father instanceof mongoose.Model);
+        assert.ok(father._id instanceof mongoose.mongo.ObjectID);
+        joi.assert(
+          father,
+          joi
+            .oid()
+            .required()
+            .same(father._id),
+        );
+        joi.assert(
+          father,
+          joi
+            .oid()
+            .required()
+            .same([father._id, soon._id]),
+        );
+        assert.throws(() => {
+          joi.assert(
+            father,
+            joi
+              .oid()
+              .required()
+              .same(soon._id),
+          );
+        });
+      });
+      it('With equal id', () => {
+        assert.ok(father instanceof mongoose.Model);
+        assert.ok(typeof father.id === 'string');
+        joi.assert(
+          father,
+          joi
+            .oid()
+            .required()
+            .same(father.id),
+        );
+        joi.assert(
+          father,
+          joi
+            .oid()
+            .required()
+            .same([father.id, soon.id]),
+        );
+        assert.throws(() => {
+          joi.assert(
+            father,
+            joi
+              .oid()
+              .required()
+              .same(soon.id),
+          );
+        });
+      });
+      it('With equal document', () => {
+        assert.ok(father instanceof mongoose.Model);
+        joi.assert(
+          father,
+          joi
+            .oid()
+            .required()
+            .same(father),
+        );
+        joi.assert(
+          father,
+          joi
+            .oid()
+            .required()
+            .same([father, soon]),
+        );
+        assert.throws(() => {
+          joi.assert(
+            father,
+            joi
+              .oid()
+              .required()
+              .same(soon),
+          );
+        });
+      });
+    });
+  });
+
+  describe('Model', () => {
+    describe('Type validation', () => {
+      it('Generic model', () => {
+        assertPersonDocument(father);
+        const output = joi.attempt(father, joi.doc().required());
+        assertPersonDocument(output);
+      });
+      it('Model string', () => {
+        assertPersonDocument(father);
+        const output = joi.attempt(
+          father,
+          joi
+            .doc()
+            .model('person')
+            .required(),
+        );
+        assertPersonDocument(output);
+        assert.throws(() => {
+          joi.assert(
+            father,
+            joi
+              .doc()
+              .model('car')
+              .required(),
+          );
+        });
+      });
+      it('Model from other document', () => {
+        assertPersonDocument(father);
+        const output = joi.attempt(
+          father,
+          joi
+            .doc()
+            .model(father)
+            .required(),
+        );
+        assertPersonDocument(output);
+        assert.throws(() => {
+          joi.assert(
+            father,
+            joi
+              .doc()
+              .model(van)
+              .required(),
+          );
+        });
+      });
+      it('Model class', () => {
+        assertPersonDocument(father);
+        const output = joi.attempt(
+          father,
+          joi
+            .doc()
+            .model(Person)
+            .required(),
+        );
+        assertPersonDocument(output);
+        assert.throws(() => {
+          joi.assert(
+            father,
+            joi
+              .doc()
+              .model(Car)
+              .required(),
+          );
+        });
+      });
+    });
+  });
 });
